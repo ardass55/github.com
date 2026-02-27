@@ -1,0 +1,336 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Arda ❤️ Sude</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: black;
+            font-family: Arial;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+            text-align: center;
+        }
+
+        /* SABİT YILDIZ */
+        .static-star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.6;
+        }
+
+        /* KAYAN YILDIZ */
+        .moving-star {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+        }
+
+        /* YILDIZ IŞIK İZİ */
+        .trail {
+            position: absolute;
+            width: 60px;
+            height: 2px;
+            background: linear-gradient(to right, white, transparent);
+            transform-origin: left;
+            opacity: 0.8;
+        }
+
+        /* FOTO */
+        .photo {
+            position: absolute;
+            width: 200px;
+            border-radius: 20px;
+            box-shadow: 0 0 35px pink;
+            transition: all 1.5s ease;
+        }
+
+        /* ÜST GALERİ */
+        .top-gallery {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+        }
+
+        /* KALP */
+        .heart {
+            position: absolute;
+            color: #ff4d88;
+            font-size: 20px;
+            animation: explode 1.2s ease-out forwards;
+        }
+
+        @keyframes explode {
+            from {
+                transform: translate(0,0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translate(var(--x),var(--y));
+                opacity: 0;
+            }
+        }
+
+        /* FINAL YILDIZ */
+        .final-star {
+            position: absolute;
+            width: 350px;
+            height: 350px;
+            background: gold;
+            clip-path: polygon( 50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35% );
+            box-shadow: 0 0 60px gold, 0 0 120px pink;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 32px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 0 20px pink;
+            z-index: 1; /* ARKA PLANDA */
+            opacity: 0;
+        }
+
+        /* Yazı */
+        #finalText {
+            position: absolute;
+            bottom: 10%;
+            font-size: 26px;
+            color: pink;
+            text-shadow: 0 0 20px pink;
+            max-width: 850px;
+            line-height: 1.6;
+            z-index: 50;
+        }
+
+        h1 {
+            z-index: 50;
+            color: gold;
+            text-shadow: 0 0 20px pink;
+        }
+
+        button {
+            padding: 12px 25px;
+            background: #ff0055;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            margin-top: 20px;
+            z-index: 50;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Arda ❤️ Sude</h1>
+    <button onclick="start()">Gökyüzüne Dokun 💫</button>
+
+    <div id="gallery" class="top-gallery"></div>
+    <div id="finalText"></div>
+
+    <audio id="bgMusic" loop>
+        <source src="{{ url_for('static', filename='music.mp3') }}" type="audio/mpeg">
+    </audio>
+
+    <script>
+
+let photos=[
+    "{{ url_for('static', filename='photo1.jpg') }}",
+    "{{ url_for('static', filename='photo2.jpg') }}",
+    "{{ url_for('static', filename='photo3.jpg') }}",
+    "{{ url_for('static', filename='photo4.jpg') }}",
+    "{{ url_for('static', filename='photo5.jpg') }}"
+];
+
+let shownPhotos=0;
+let totalPhotos=photos.length;
+let photoInterval=null;
+let running=false;
+
+/* SABİT YILDIZLAR */
+for(let i=0;i<200;i++){
+    let star=document.createElement("div");
+    star.className="static-star";
+    star.style.top=Math.random()*100+"vh";
+    star.style.left=Math.random()*100+"vw";
+    document.body.appendChild(star);
+}
+
+/* KAYAN YILDIZLAR + İZ */
+function movingStars(){
+    setInterval(()=>{
+
+        let star=document.createElement("div");
+        star.className="moving-star";
+
+        let startX=window.innerWidth;
+        let startY=Math.random()*window.innerHeight;
+
+        star.style.left=startX+"px";
+        star.style.top=startY+"px";
+
+        document.body.appendChild(star);
+
+        let duration=Math.random()*4000+2000;
+
+        // BAZILARINDA İZ OLSUN
+        if(Math.random()>0.5){
+            let trail=document.createElement("div");
+            trail.className="trail";
+            trail.style.left=startX+"px";
+            trail.style.top=startY+"px";
+            document.body.appendChild(trail);
+
+            trail.animate([
+                {transform:"translateX(0)",opacity:1},
+                {transform:`translateX(-800px)`,opacity:0}
+            ],{duration:duration});
+
+            setTimeout(()=>trail.remove(),duration);
+        }
+
+        star.animate([
+            {transform:"translateX(0)",opacity:1},
+            {transform:`translateX(-800px)`,opacity:0}
+        ],{duration:duration});
+
+        setTimeout(()=>star.remove(),duration);
+
+    },300);
+}
+
+/* FOTO AKIŞ */
+function launchPhoto(){
+
+    if(shownPhotos>=totalPhotos){
+        clearInterval(photoInterval);
+        showFinalText();
+        showFinalStar();
+        return;
+    }
+
+    let src=photos[shownPhotos];
+    let img=document.createElement("img");
+    img.src=src;
+    img.className="photo";
+
+    let startX=Math.random()<0.5?-300:window.innerWidth+300;
+    let startY=Math.random()*window.innerHeight*0.6;
+
+    img.style.left=startX+"px";
+    img.style.top=startY+"px";
+
+    document.body.appendChild(img);
+
+    let targetX=Math.random()*(window.innerWidth-300);
+    let targetY=window.innerHeight*0.55;
+
+    setTimeout(()=>{
+        img.style.left=targetX+"px";
+        img.style.top=targetY+"px";
+    },50);
+
+    setTimeout(()=>{
+        explodeHearts(targetX,targetY);
+    },1500);
+
+    setTimeout(()=>{
+        moveToGallery(img);
+    },3000);
+
+    shownPhotos++;
+}
+
+function moveToGallery(img){
+    let gallery=document.getElementById("gallery");
+    img.style.position="static";
+    img.style.width="120px";
+    gallery.appendChild(img);
+}
+
+function explodeHearts(x,y){
+    for(let i=0;i<20;i++){
+        let heart=document.createElement("div");
+        heart.className="heart";
+        heart.innerHTML="❤️";
+        heart.style.left=x+"px";
+        heart.style.top=y+"px";
+        heart.style.setProperty("--x",(Math.random()-0.5)*300+"px");
+        heart.style.setProperty("--y",(Math.random()-0.5)*300+"px");
+        document.body.appendChild(heart);
+        setTimeout(()=>heart.remove(),1200);
+    }
+}
+
+/* FINAL YAZI */
+function showFinalText(){
+    typeWriter(
+        "Aşkım… sen benim gökyüzümdeki en parlak yıldızımsın. ❤️ " +
+        "Seninle her şey daha güzel, her şey daha anlamlı. 💫",
+        "finalText",
+        50
+    );
+}
+
+/* YILDIZ KAYARAK GELİR VE ARKADA DURUR */
+function showFinalStar(){
+
+    let star=document.createElement("div");
+    star.className="final-star";
+    star.innerHTML="Arda ❤️ Sude";
+
+    star.style.left=window.innerWidth+"px";
+    star.style.top="30%";
+
+    document.body.appendChild(star);
+
+    setTimeout(()=>{
+        star.style.transition="all 3s ease";
+        star.style.left="50%";
+        star.style.transform="translateX(-50%)";
+        star.style.opacity="1";
+    },100);
+}
+
+function typeWriter(text, elementId, speed){
+    let i=0;
+    let element=document.getElementById(elementId);
+    element.innerHTML="";
+    function typing(){
+        if(i<text.length){
+            element.innerHTML+=text.charAt(i);
+            i++;
+            setTimeout(typing,speed);
+        }
+    }
+    typing();
+}
+
+function start(){
+    if(running) return;
+    running=true;
+    document.getElementById("bgMusic").play();
+    movingStars();
+    photoInterval=setInterval(launchPhoto,6000);
+}
+
+    </script>
+
+</body>
+</html>
